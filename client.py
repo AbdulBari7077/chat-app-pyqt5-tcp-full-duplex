@@ -9,7 +9,15 @@ from time import sleep
 import socket
 import threading 
 
+def connectclient(ip, port): #connects a socket
+    global c
+    c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    c.connect((ip, int(port)))
+    client.conn.setText("Connected")
+    threading.Thread(target=outputMethod).start()
+    
 def SendMsg():
+    # print(client)
     message=client.clientsend.text()
     c.send(message.encode())
     return
@@ -17,29 +25,26 @@ def SendMsg():
 
 def outputMethod():
     while 1:
+        print(c)
         reply = c.recv(1024).decode()
-        print(reply)
+        print("recived client:",reply)
         client.clientrec.setText(str(reply))
-        print('client: ', reply)
-        return
+    return
 
 
 
-def connectclient(ip, port): #connects a socket
-    global c
-    c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    c.connect(('localhost', int(port)))
-    threading.Thread(target=outputMethod).start()
+
 
 def verifyPort():
     print("startlistening clicked",client.ipport.text())
     ip,port =client.ipport.text().split(":")
-    # print(ip,port)
-    if int(port)>0 and int(port)<65535: 
-        t1 = threading.Thread(target=connectclient, args=(ip, port)) # run connect function -> argumrnts( port + ip)
-        t1.start()
-    else:
-        print("Wrong Port")
+    try :
+        if int(port)>0 and int(port)<65535:
+            print("connected") 
+            t1 = threading.Thread(target=connectclient, args=(ip,port,))
+            t1.start()            
+    except:
+        print("Wrong Port : Port should be between 0-65535")
 
 
 class ClientScreen(QMainWindow):

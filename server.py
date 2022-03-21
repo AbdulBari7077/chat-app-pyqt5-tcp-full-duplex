@@ -1,66 +1,72 @@
-from email import message
+
 import sys
-from time import sleep
 from tkinter import Widget
 from PyQt5.uic import loadUi
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QDialog,QApplication,QWidget ,QStackedWidget , QMainWindow
 from time import sleep
-import socket as s
-from threading import *
+import socket 
 import threading
-from functools import partial
 
+clients = set()
+clients_lock = threading.Lock()
 
 
 def Recieve():
     while 1:
+        # print(client)
         reply = client.recv(1024).decode()
-        print(reply)
+        print("recived server:",reply)
         server.serverrec.setText(str(reply))
     return
 
 
 def startListening(port):
     global client, addr
-    socket = s.socket()
+    s=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     print('started socket')
-    socket.bind(('localhost',int(port)))
-    socket.listen(5)
+    s.bind(('localhost',int(port)))
+    s.listen(5)
     # sleep(10)
-    # print("port is listening")
+    print("port is listening")
     while True:
-        client, addr = socket.accept()
-        print("connected")
+        client, addr = s.accept()
+        with clients_lock:
+            clients.add(client)
+        print("--------------------connected----------------------")
+        # sleep(10)
         threading.Thread(target=Recieve).start()
-    # print("Connected to",addr)
-    # # while 1: or self.serverrec.text()!=str(c.recv(1024).decode())
-    # print("1------server2------")
-    # # Recieve(c)
-    # print("2------server2------")
-    # server.send.clicked.connect(lambda:Send(c))
-    # print(server.send.isChecked())
-    # if self.serverrec.text()!= "received message":
-    #     print( self.serverrec.text())
-    # #     # Send(c)
-    # Recieve(c)
-    # sleep(3)
-    s.close()
 
 def Send():
     message=server.serversend.text()
-    print(message,"2==================")
-    client.send(message.encode())
+    with clients_lock:
+        for c in clients:
+            c.sendall(message.encode())
+    # client.sendall()
     return
 
 def verifyPort():
     port =server.port.text()
     print("startlistening clicked",server.port.text())
-    if int(port)>0 and int(port)<65535: 
-        t1 = threading.Thread(target=startListening, args=(port,))
-        t1.start()
-    else:
-        print("Wrong Port")
+    try :
+        if int(port)>0 and int(port)<65535: 
+            t1 = threading.Thread(target=startListening, args=(port,))
+            t1.start()
+        else:
+            print("Wrong Port : Port should be between 0-65535")
+    except:
+        print("Wrong Port : Port should be between 0-65535")
+    # if (server.port.text()) == "" :
+    #     print("-------------Port Field should be Not Empty------")
+    #     # server.port.setText(str("0-65535"))
+    #     # verifyPort()
+    #     return
+    # elif int(port)>0 and int(port)<65535: 
+    #     t1 = threading.Thread(target=startListening, args=(port,))
+    #     t1.start()
+    # else:
+        
+
 
 
 class ServerScreen(QMainWindow):
